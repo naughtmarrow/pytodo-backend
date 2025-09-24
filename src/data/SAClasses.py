@@ -36,4 +36,4 @@ class _SATodo(_Base):
     priority: Mapped[PriorityType]
     completed: Mapped[bool]
 
-    __table_args__ = Index("todo_user_id_fkey", user_id, postgresql_using="hash")
+    __table_args__ = (Index("todo_user_id_fkey", user_id, postgresql_using="hash"),)
