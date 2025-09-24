@@ -1,10 +1,12 @@
 import os
 
-from sqlalchemy import URL, create_engine
+from dotenv import load_dotenv
+from sqlalchemy import URL, create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 
 def _db_init():
+    load_dotenv()
     url = URL.create(
         "postgresql+psycopg2",
         username=os.getenv("DB_USER"),
@@ -24,6 +26,21 @@ def _db_init():
 
 _engine = _db_init()
 _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
+
+
+def ping_db() -> bool:
+    """
+    Used to ping the database in order to test the connection
+    """
+    try:
+        with _engine.connect() as conn:
+            _ = conn.execute(text("SELECT 1"))
+    except Exception as e:
+        print(f"Database ping failed: {e}")
+        return False
+    else:
+        print("Database connection succesful")
+        return True
 
 
 class TransactionManager:

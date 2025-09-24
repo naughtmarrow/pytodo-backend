@@ -1,3 +1,3 @@
-from .db import TransactionManager
+from .db import TransactionManager, ping_db
 
-__all__ = ['TransactionManager']
+__all__ = ['TransactionManager', 'ping_db']
