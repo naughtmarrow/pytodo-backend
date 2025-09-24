@@ -3,9 +3,11 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import URL, engine_from_config, pool
+from dotenv import load_dotenv
 
 from src.data.SAClasses import _Base
 
+load_dotenv()
 config = context.config
 
 if config.config_file_name is not None:
