@@ -49,8 +49,11 @@ class TransactionManager:
     It automatically opens, closes, rollbacks and commits sessions for the user.
 
     Usage:
+        In BL:
         with TransactionManager() as transaction_manager_instance
             some_db_func(...args, transaction_manager_instance)
+        In DAL:
+        tm._session()
     """
 
     def __init__(self):
@@ -65,3 +68,8 @@ class TransactionManager:
         else:
             self.__session.commit()
         self.__session.close()
+
+    @property
+    def _session(self):
+        """Allows direct access to the session for usage. You should only use while in DAL methods"""
+        return self.__session
