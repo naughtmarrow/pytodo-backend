@@ -1,5 +1,5 @@
 import pytest
-from src.data import TransactionManager, ping_db, save_todo, get_todo_id, get_todos_from_user, delete_todo, save_user, get_user_id, delete_user
+from src.data import TransactionManager, ping_db, save_todo, get_todo_id, get_todos_from_user, delete_todo, save_user, get_user_id, delete_user, update_user
 from src.core import Todo, User
 
 
@@ -8,7 +8,7 @@ def test_db_ping():
 
 def test_user_save():
     try:
-        with TransactionManager(debug=True) as tm:
+        with TransactionManager(debug=True) as conn:
             default_username = "test_username"
             default_password = "test_password"
 
@@ -17,13 +17,9 @@ def test_user_save():
                 username=default_username,
                 password=default_password
             )
-            usr = save_user(usr, tm)
+            usr_id = save_user(usr, conn)
 
-            assert(usr.id is not None)
-            assert(usr.username == default_username)
-            assert(usr.password == default_password)
-
-            get_usr = get_user_id(usr.id, tm)
+            get_usr = get_user_id(usr_id, conn)
 
             assert(get_usr.id is not None)
             assert(get_usr.username == usr.username)
@@ -32,11 +28,12 @@ def test_user_save():
             update_username="test_username_update"
             usr.username = update_username
 
-            usr = save_user(usr, tm)
+            usr.id = usr_id
+            upd_usr = update_user(usr, conn)
 
-            assert(usr.username == update_username)
+            assert(upd_usr.username == update_username)
 
-            get_usr = get_user_id(usr.id, tm)
+            get_usr = get_user_id(upd_usr.id, conn)
 
             assert(get_usr.username == usr.username)
 
@@ -45,7 +42,7 @@ def test_user_save():
 
 def test_user_delete():
     with pytest.raises(Exception):
-        with TransactionManager(debug=True) as tm:
+        with TransactionManager(debug=True) as conn:
             default_username = "test_username_del"
             default_password = "test_password_del"
             usr = User(
@@ -53,19 +50,15 @@ def test_user_delete():
                 username=default_username,
                 password=default_password
             )
-            usr = save_user(usr, tm)
+            usr_id = save_user(usr, conn)
 
-            assert(usr.id is not None)
-            assert(usr.username == default_username)
-            assert(usr.password == default_password)
-
-            get_usr = get_user_id(usr.id, tm)
+            get_usr = get_user_id(usr_id, conn)
 
             assert(get_usr.id is not None)
             assert(get_usr.username == usr.username)
             assert(get_usr.password == usr.password)
 
-            assert(delete_user(usr, tm))
+            assert(delete_user(usr, conn))
 
-            get_usr = get_user_id(usr.id, tm)
+            get_usr = get_user_id(usr_id, conn)
             assert(get_usr.id is None)

@@ -1,22 +1,27 @@
 from src.core import User
-from src.data.SAClasses import _SAUser
-
-from . import TransactionManager
-from sqlalchemy import select
+from sqlalchemy import Connection, text
 
 
-def save_user(usr: User, tm: TransactionManager) -> User:
+def save_user(usr: User, conn: Connection) -> User:
     try:
-        sau = _SAUser(
-            username=usr.username,
-            password=usr.password,  # WARN: probably should change this later
+        query = text(
+            "INSERT INTO users (username, password)"
+            + "VALUES (:username, :password) RETURNING id"
         )
 
-        tm.add(sau)
-        tm.flush()
-        tm.refresh(sau)
+        id = (
+            conn.execute(
+                query,
+                {
+                    "username": usr.username,
+                    "password": usr.password,
+                },
+            )
+            .one()
+            .id
+        )
 
-        return User(id=sau.id, username=sau.username, password=sau.password)
+        return id
 
     except Exception as e:
         # TODO: Add logging here and consider using specific files and named exceptions
@@ -24,15 +29,17 @@ def save_user(usr: User, tm: TransactionManager) -> User:
         raise e
 
 
-def get_user_id(user_id: int, tm: TransactionManager) -> User:  # type: ignore
+def get_user_id(user_id: int, conn: Connection) -> User:
     try:
-        sau: _SAUser = (
-            tm.execute(select(_SAUser).where(_SAUser.id == user_id))
-            .scalars()
-            .one()
-        )
+        query = text("SELECT * FROM users WHERE id = :id")
+        usr = conn.execute(query, {"id": user_id}).fetchone()._mapping  # type: ignore
 
-        return User(id=sau.id, username=sau.username, password=sau.password)
+        # WARN: PROBABLY SHOULDN'T BE FETCHING THE PASSWORD UNLESS ABSOLUTELY NECESSARY
+        return User(
+            id=usr.id,
+            username=usr.username,
+            password=usr.password,
+        )
 
     except Exception as e:
         # TODO: Add logging here and consider using specific files and named exceptions
@@ -40,14 +47,36 @@ def get_user_id(user_id: int, tm: TransactionManager) -> User:  # type: ignore
         raise e
     pass
 
-
-def delete_user(user: User, tm: TransactionManager) -> bool:  # type: ignore
+def update_user(user: User, conn: Connection) -> User:
     try:
-        tm.delete(user)
-        tm.flush()
+        query = text(
+            "UPDATE users SET username = :username, password = :password "
+            + "WHERE id = :id RETURNING *"
+        )
+
+        # WARN: PROBABLY SHOULDN'T BE UPDATING THE PASSWORD UNLESS ABSOLUTELY NECESSARY
+        res = conn.execute(
+            query,
+            {
+                "id": user.id,
+                "username": user.username,
+                "password": user.password,
+            },
+        ).one()._mapping
+
+        return User(**res)
+    except Exception as e:
+        # TODO: Add logging here and consider using specific files and named exceptions
+        # for different layers
+        raise e
+
+def delete_user(user: User, conn: Connection) -> bool:
+    try:
+        query = text("DELETE FROM users WHERE id = :id")
+        conn.execute(query, {"id": user.id})
+
         return True
     except Exception as e:
         # TODO: Add logging here and consider using specific files and named exceptions
         # for different layers
         raise e
-    return True

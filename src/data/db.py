@@ -1,8 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import URL, create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Connection, URL, create_engine, text
 
 
 def _db_init():
@@ -25,17 +24,17 @@ def _db_init():
 
 
 _engine = _db_init()
-_SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
-
 
 def ping_db() -> bool:
     """
-    Used to ping the database in order to test the connection
+    Used to ping the database in order to test the connection.
+    Returns true if connection is successful and raises an exception if the connection fails
     """
     try:
         with _engine.connect() as conn:
             _ = conn.execute(text("SELECT 1"))
     except Exception as e:
+        # TODO: change to a normal logging setup
         print(f"Database ping failed: {e}")
         return False
     else:
@@ -50,28 +49,26 @@ class TransactionManager:
 
     Usage:
         In BL:
-        with TransactionManager() as transaction_manager_instance
-            some_db_func(...args, transaction_manager_instance)
+        The transaction manager connection is passed to other methods for querying.
+            with TransactionManager() as tm:
+                some_db_method(...args, transaction_manager=tm)
+
         In DAL:
-        tm._session()
+        The connection can be used as usual.
+            tm.execute(text("SOME SQL QUERY"))
     """
 
     def __init__(self, debug: bool = False):
-        self.__session = _SessionLocal()
-        self.__session.execute(text("SET search_path TO :schema"), {"schema": os.getenv('DB_SCHEMA')})
+        self.__connection = Connection(_engine)
+        self.__connection.execute(text("SET search_path TO :schema"), {"schema": os.getenv('DB_SCHEMA')})
         self.__debug = debug
 
     def __enter__(self):
-        return self.__session
+        return self.__connection
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type or self.__debug:
-            self.__session.rollback()
+            self.__connection.rollback()
         else:
-            self.__session.commit()
-        self.__session.close()
-
-    @property
-    def _session(self):
-        """Allows direct access to the session for usage. You should only use while in DAL methods"""
-        return self.__session
+            self.__connection.commit()
+        self.__connection.close()

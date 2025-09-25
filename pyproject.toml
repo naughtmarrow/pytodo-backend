@@ -1,5 +1,6 @@
 [project]
 
+name = "Pytodo"
 version = "0.2.1"
 description = "A todo app in python (API)"
 authors = [
