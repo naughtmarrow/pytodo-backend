@@ -56,14 +56,16 @@ class TransactionManager:
         tm._session()
     """
 
-    def __init__(self):
+    def __init__(self, debug: bool = False):
         self.__session = _SessionLocal()
+        self.__session.execute(text("SET search_path TO :schema"), {"schema": os.getenv('DB_SCHEMA')})
+        self.__debug = debug
 
     def __enter__(self):
         return self.__session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type:
+        if exc_type or self.__debug:
             self.__session.rollback()
         else:
             self.__session.commit()

@@ -11,6 +11,17 @@ from .SAClasses import _SATodo, _SAUser
 
 #  WARN: EXPERIMENTAL BUILD WITH A MIXED CREATE/UPDATE QUERY
 def save_todo(td: Todo, tm: TransactionManager) -> Todo:
+    """
+    Saves changes made to a todo object in database and creates a new todo if one does not exist.
+    Parameters:
+        - td: An object of type Todo to be saved
+        - tm: An instance of TransactionManager to manage the session
+    Returns:
+        An object of type todo with the information that was saved to the database
+    
+    Usage:
+        new_todo = save_todo(td, tm)
+    """
     try:
         sat = _SATodo(
             user_id=td.user_id,
@@ -21,14 +32,11 @@ def save_todo(td: Todo, tm: TransactionManager) -> Todo:
             completed=td.completed,
         )
 
-        if td.user_id is not None:
-            sat.id=td.id
+        tm.add(sat)
+        tm.flush()
+        tm.refresh(sat)
 
-        tm._session().add(sat)
-        tm._session().flush()
-        tm._session().refresh(sat)
-
-        ntd: Todo = Todo(
+        return Todo(
             id=sat.id,
             user_id=sat.user_id,
             description=sat.description,
@@ -37,8 +45,6 @@ def save_todo(td: Todo, tm: TransactionManager) -> Todo:
             priority=sat.priority,
             completed=sat.completed,
         )
-
-        return ntd
 
     except Exception as e:
         # TODO: Add logging here and consider using specific files and named exceptions
@@ -49,7 +55,7 @@ def save_todo(td: Todo, tm: TransactionManager) -> Todo:
 def get_todo_id(todo_id: int, tm: TransactionManager) -> Todo:
     try:
         td: _SATodo = (
-            tm._session.execute(select(_SATodo).where(_SATodo.id == todo_id))
+            tm.execute(select(_SATodo).where(_SATodo.id == todo_id))
             .scalars()
             .one()
         )
@@ -73,7 +79,7 @@ def get_todo_id(todo_id: int, tm: TransactionManager) -> Todo:
 def get_todos_from_user(user_id: int, tm: TransactionManager) -> List[Todo]:
     try:
         result_person: _SAUser = (
-            tm._session.execute(
+            tm.execute(
                 select(_SAUser)
                 .where(_SAUser.id == user_id)
                 .options(selectinload(_SAUser.things))
@@ -102,10 +108,11 @@ def get_todos_from_user(user_id: int, tm: TransactionManager) -> List[Todo]:
         # for different layers
         raise e
 
+
 def delete_todo(todo: Todo, tm: TransactionManager) -> bool:  # type: ignore
     try:
-        tm._session.delete(todo)
-        tm._session().flush()
+        tm.delete(todo)
+        tm.flush()
         return True
     except Exception as e:
         # TODO: Add logging here and consider using specific files and named exceptions
