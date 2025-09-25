@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import ForeignKey, Identity, Index
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
+    relationship
 )
 
 from src.common.types import PriorityType
@@ -21,6 +22,10 @@ class _SAUser(_Base):
     id: Mapped[int] = mapped_column(Identity(always=True), primary_key=True)
     username: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str]
+
+    things: Mapped[List["_SATodo"]] = (
+        relationship()
+    )
 
 
 class _SATodo(_Base):

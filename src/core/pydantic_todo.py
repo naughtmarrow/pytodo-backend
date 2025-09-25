@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from src.common import PriorityType
 
 class Todo(BaseModel):
-    id: int
+    id: Optional[int] # optional since when creating we won't have an id
     user_id: int
     description: str
     date_created: datetime
