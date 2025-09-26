@@ -4,6 +4,7 @@ from sqlalchemy import Connection, text
 
 from src.core import Todo
 from src.common import PriorityType
+from psycopg2.errors import NoData
 
 
 def save_todo(td: Todo, conn: Connection) -> int:
@@ -61,7 +62,12 @@ def get_todo_id(todo_id: int, conn: Connection) -> Todo:
     """
     try:
         query = text("SELECT * FROM todos WHERE id = :id")
-        td = conn.execute(query, {"id": todo_id}).fetchone()._mapping  # type: ignore
+        td = conn.execute(query, {"id": todo_id}).fetchone()
+            
+        if td is None:
+            raise NoData
+
+        td = td._mapping  # type: ignore
 
         return Todo(
             id=td.id,

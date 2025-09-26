@@ -1,5 +1,6 @@
 from src.core import User
 from sqlalchemy import Connection, text
+from psycopg2.errors import NoData
 
 
 def save_user(user: User, conn: Connection) -> int:
@@ -54,7 +55,13 @@ def get_user_id(user_id: int, conn: Connection) -> User:
     """
     try:
         query = text("SELECT * FROM users WHERE id = :id")
-        usr = conn.execute(query, {"id": user_id}).fetchone()._mapping  # type: ignore
+        usr = conn.execute(query, {"id": user_id}).fetchone()
+
+        # HACK: this really can't be the best way to deal with this lmao
+        if usr is None:
+            raise NoData
+
+        usr = usr._mapping  # type: ignore
 
         # WARN: PROBABLY SHOULDN'T BE FETCHING THE PASSWORD UNLESS ABSOLUTELY NECESSARY
         return User(
