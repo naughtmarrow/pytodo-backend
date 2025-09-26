@@ -3,7 +3,7 @@ from enum import Enum
 from psycopg2.extensions import QuotedString, register_adapter
 
 
-class PriorityType(Enum):
+class PriorityType(int, Enum):
     URGENT = 1
     IMPORTANT = 2
     NORMAL = 3
