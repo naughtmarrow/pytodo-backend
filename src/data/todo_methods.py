@@ -8,7 +8,7 @@ from src.common import PriorityType
 
 def save_todo(td: Todo, conn: Connection) -> int:
     """
-    Saves changes made to a todo object in database and creates a new todo if one does not exist.
+    Saves a new todo object in database.
     Parameters:
         - td: An object of type Todo to be saved
         - conn: A connection to execute queries from
@@ -16,7 +16,7 @@ def save_todo(td: Todo, conn: Connection) -> int:
         The primary key (id) of the inserted todo object in the database.
 
     Usage:
-        new_id = save_todo(td, tm)
+        new_id = save_todo(td, conn)
     """
     try:
         query = text(
@@ -88,7 +88,7 @@ def get_todos_from_user(user_id: int, conn: Connection) -> List[Todo]:
         A list of todo objects with the data corresponding to that of the todo items in the database related to the given user.
 
     Usage:
-        todo = get_todo_id(todo_id, conn)
+        todo = get_todos_from_user(user_id, conn)
     """
     try:
         query = text("SELECT * FROM todos WHERE user_id = :user_id")
@@ -116,6 +116,17 @@ def get_todos_from_user(user_id: int, conn: Connection) -> List[Todo]:
 
 
 def update_todo(td: Todo, conn: Connection) -> Todo:
+    """
+    Updates an already existing todo object's values in the database.
+    Parameters:
+        - td: An object of type Todo to be updated
+        - conn: A connection to execute queries from
+    Returns:
+        A todo object with the data corresponding to that of the todo item in the database.
+
+    Usage:
+        todo = update_todo(td, conn)
+    """
     try:
         query = text(
             "UPDATE todos SET user_id = :user_id, description = :description,"
@@ -145,6 +156,17 @@ def update_todo(td: Todo, conn: Connection) -> Todo:
 
 
 def delete_todo(td: Todo, conn: Connection) -> bool:
+    """
+    Deletes a todo item from the database.
+    Parameters:
+        - td: An object of type Todo to be deleted 
+        - conn: A connection to execute queries from
+    Returns:
+        A boolean value to represent the success of the operation.
+
+    Usage:
+        todo = delete_todo(td, conn)
+    """
     try:
         query = text("DELETE FROM todos WHERE id = :id")
         conn.execute(query, {"id": td.id})
