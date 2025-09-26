@@ -1,10 +1,31 @@
+import logging
+
 from flask import Flask
 from werkzeug.exceptions import HTTPException
 
-from src.routes import handle_generic_exception, handle_http_exception, user_blueprint, todo_blueprint
+from src.data import ping_db
+from src.routes import (
+    handle_generic_exception,
+    handle_http_exception,
+    todo_blueprint,
+    user_blueprint,
+)
 
 
 def create_app():
+    logging.basicConfig(
+        filename="log/test.log",
+        level=logging.INFO,
+        format="[%(asctime)s] [%(levelname)s @ %(name)s] %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+    logger = logging.getLogger(__name__)
+
+    logger.info(msg="Starting Server...")
+
+    if not ping_db():
+        raise Exception("Database must be started for app to run")
+
     app = Flask(__name__)
 
     app.register_blueprint(user_blueprint)
@@ -17,6 +38,7 @@ def create_app():
     def hello_world():
         return "<p>Hello, World!</p>"
 
+    logger.info(msg="Server Setup Complete...")
     return app
 
 

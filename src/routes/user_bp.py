@@ -1,5 +1,5 @@
 # mypy: check-untyped-defs
-
+import logging
 from flask import Blueprint, Response, abort, request
 from psycopg2.errors import NoData, NoDataFound, UniqueViolation
 from pydantic import ValidationError
@@ -14,6 +14,7 @@ from src.data import (
 )
 from src.routes.responses import success_response
 
+_logger = logging.getLogger("USERROUTE")
 user_blueprint: Blueprint = Blueprint("user_bp", __name__, url_prefix="/users")
 
 
@@ -29,12 +30,9 @@ def _get_user_id_route(user_id):
             return response
 
     except (NoData, NoDataFound) as e:
-        # TODO: add logging here with e
-        print(e)
         abort(404, description=f"User with id {user_id} not found")
     except Exception as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.error(msg=f"Unkwown error in todo GET list from user route: {e}")
         abort(500)
 
 
@@ -59,24 +57,21 @@ def _post_user_route():
             return response
 
     except UniqueViolation as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.warn(msg=f"Unique Violation in POST user route: {e}")
         abort(
             400,
             description="Username must be unique",
         )
 
     except (ValidationError, TypeError, KeyError) as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.warn(msg=f"Validation error in POST user route: {e}")
         abort(
             400,
             description="Invalid request data (make sure all fields are full and properly formatted)",
         )
 
     except Exception as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.error(msg=f"Unkwown error in POST user route: {e}")
         abort(500)
 
 
@@ -103,24 +98,21 @@ def _put_user_route():
             return response
 
     except UniqueViolation as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.warn(msg=f"Unique Violation in POST user route: {e}")
         abort(
             400,
             description="Username must be unique",
         )
 
     except (ValidationError, TypeError, KeyError) as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.warn(msg=f"Validation error in PUT user route: {e}")
         abort(
             400,
             description="Invalid request data (make sure all fields are full and properly formatted)",
         )
 
     except Exception as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.error(msg=f"Unkwown error in PUT user route: {e}")
         abort(500)
 
 
@@ -138,8 +130,7 @@ def _delete_user_route(user_id):
             return response
 
     except NoData:
-        # TODO: add logging here with e
         abort(404, description="User not found")
-    except Exception:
-        # TODO: add logging here with e
+    except Exception as e:
+        _logger.error(msg=f"Unkwown error in DELETE user route: {e}")
         abort(500)

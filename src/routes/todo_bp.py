@@ -1,4 +1,5 @@
 # mypy: check-untyped-defs
+import logging
 from datetime import datetime
 from typing import Dict, List
 
@@ -17,6 +18,7 @@ from src.data import (
 )
 from src.routes.responses import success_response
 
+_logger = logging.getLogger("TODOROUTE")
 todo_blueprint: Blueprint = Blueprint("todo_bp", __name__, url_prefix="/todos")
 
 
@@ -36,7 +38,7 @@ def _get_todos_from_user_route(user_id):
     except (NoData, NoDataFound):
         abort(404, description="No todos found for given user")
     except Exception as e:
-        print(e)
+        _logger.error(msg=f"Unkwown error in todo GET list from user route: {e}")
         abort(500)
 
 
@@ -67,16 +69,14 @@ def _post_todo_route():
             return response
 
     except (ValidationError, TypeError, KeyError) as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.warn(msg=f"Validation error in POST todo route: {e}")
         abort(
             400,
             description="Invalid request data (make sure all fields are full and properly formatted)",
         )
 
     except Exception as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.error(msg=f"Unkwown error in POST todo route: {e}")
         abort(500)
 
 
@@ -109,16 +109,14 @@ def _put_todo_route():
             return response
 
     except (ValidationError, TypeError, KeyError) as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.warn(msg=f"Validation error in PUT todo route: {e}")
         abort(
             400,
             description="Invalid request data (make sure all fields are full and properly formatted)",
         )
 
     except Exception as e:
-        # TODO: add logging here with e
-        print(e)
+        _logger.error(msg=f"Unkwown error in PUT todo route: {e}")
         abort(500)
 
 
@@ -136,8 +134,7 @@ def _delete_todo_route(todo_id):
             return response
 
     except NoData:
-        # TODO: add logging here with e
         abort(404, description="Todo not found")
-    except Exception:
-        # TODO: add logging here with e
+    except Exception as e:
+        _logger.error(msg=f"Unkwown error in PUT todo route: {e}")
         abort(500)

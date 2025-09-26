@@ -1,8 +1,10 @@
 import os
+import logging
 
 from dotenv import load_dotenv
 from sqlalchemy import Connection, URL, create_engine, text
 
+_logger = logging.getLogger("DBSETUP")
 
 def _db_init():
     load_dotenv()
@@ -34,11 +36,10 @@ def ping_db() -> bool:
         with _engine.connect() as conn:
             _ = conn.execute(text("SELECT 1"))
     except Exception as e:
-        # TODO: change to a normal logging setup
-        print(f"Database ping failed: {e}")
+        _logger.error(msg=f"Pinging database failed with error {e}")
         return False
     else:
-        print("Database connection succesful")
+        _logger.info(msg="Pinging database succeded")
         return True
 
 

@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from psycopg2.errors import NoData
@@ -5,6 +6,8 @@ from sqlalchemy import Connection, text
 
 from src.common import PriorityType
 from src.core import Todo
+
+_logger = logging.getLogger("TODODAL")
 
 
 def save_todo(td: Todo, conn: Connection) -> int:
@@ -43,8 +46,7 @@ def save_todo(td: Todo, conn: Connection) -> int:
 
         return id
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while saving TODO: {e}")
         raise e
 
 
@@ -79,8 +81,7 @@ def get_todo_id(todo_id: int, conn: Connection) -> Todo:
             completed=td.completed,
         )
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while fetching todo from id: {e}")
         raise e
 
 
@@ -118,9 +119,7 @@ def get_todos_from_user(user_id: int, conn: Connection) -> List[Todo]:
 
         return tdlist
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
-        print(e)
+        _logger.error(msg=f"Error while fetching todo list from user: {e}")
         raise e
 
 
@@ -164,8 +163,7 @@ def update_todo(td: Todo, conn: Connection) -> int:
         return id
 
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while updating TODO: {e}")
         raise e
 
 
@@ -187,6 +185,5 @@ def delete_todo(td: Todo, conn: Connection) -> bool:
 
         return True
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while deleting TODO: {e}")
         raise e

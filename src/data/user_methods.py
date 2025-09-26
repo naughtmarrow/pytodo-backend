@@ -1,6 +1,11 @@
-from src.core import User
-from sqlalchemy import Connection, text
+import logging
+
 from psycopg2.errors import NoData
+from sqlalchemy import Connection, text
+
+from src.core import User
+
+_logger = logging.getLogger("USERDAL")
 
 
 def save_user(user: User, conn: Connection) -> int:
@@ -36,8 +41,7 @@ def save_user(user: User, conn: Connection) -> int:
         return id
 
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while saving user: {e}")
         raise e
 
 
@@ -71,10 +75,10 @@ def get_user_id(user_id: int, conn: Connection) -> User:
         )
 
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while fetching user from id: {e}")
         raise e
     pass
+
 
 def update_user(user: User, conn: Connection) -> User:
     """
@@ -95,26 +99,30 @@ def update_user(user: User, conn: Connection) -> User:
         )
 
         # WARN: PROBABLY SHOULDN'T BE UPDATING THE PASSWORD UNLESS ABSOLUTELY NECESSARY
-        res = conn.execute(
-            query,
-            {
-                "id": user.id,
-                "username": user.username,
-                "password": user.password,
-            },
-        ).one()._mapping
+        res = (
+            conn.execute(
+                query,
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    "password": user.password,
+                },
+            )
+            .one()
+            ._mapping
+        )
 
         return User(**res)
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while updating user: {e}")
         raise e
+
 
 def delete_user(user: User, conn: Connection) -> bool:
     """
     Deletes a user item from the database.
     Parameters:
-        - user: An object of type Todo to be deleted 
+        - user: An object of type Todo to be deleted
         - conn: A connection to execute queries from
         A boolean value to represent the success of the operation.
 
@@ -127,6 +135,5 @@ def delete_user(user: User, conn: Connection) -> bool:
 
         return True
     except Exception as e:
-        # TODO: Add logging here and consider using specific files and named exceptions
-        # for different layers
+        _logger.error(msg=f"Error while deleting user: {e}")
         raise e

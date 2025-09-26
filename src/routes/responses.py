@@ -11,7 +11,7 @@ def handle_http_exception(e: HTTPException) -> Response:
         {"status": "error", "message": e.description, "code": e.code}
     )
 
-    response.status_code = e.code  # type: ignore
+    response.status_code = e.code
     return response
 
 
