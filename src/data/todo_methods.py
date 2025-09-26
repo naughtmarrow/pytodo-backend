@@ -3,6 +3,7 @@ from typing import List
 from sqlalchemy import Connection, text
 
 from src.core import Todo
+from src.common import PriorityType
 
 
 def save_todo(td: Todo, conn: Connection) -> int:
@@ -10,7 +11,7 @@ def save_todo(td: Todo, conn: Connection) -> int:
     Saves changes made to a todo object in database and creates a new todo if one does not exist.
     Parameters:
         - td: An object of type Todo to be saved
-        - tm: An instance of TransactionManager to manage the session
+        - conn: A connection to execute queries from
     Returns:
         The primary key (id) of the inserted todo object in the database.
 
@@ -47,6 +48,17 @@ def save_todo(td: Todo, conn: Connection) -> int:
 
 
 def get_todo_id(todo_id: int, conn: Connection) -> Todo:
+    """
+    Returns a todo object with the requested id from the database.
+    Parameters:
+        - todo_id: An integer corresponding to the id value of a todo object in the database
+        - conn: A connection to execute queries from
+    Returns:
+        A todo object with the data corresponding to that of the todo item in the database.
+
+    Usage:
+        todo = get_todo_id(todo_id, conn)
+    """
     try:
         query = text("SELECT * FROM todos WHERE id = :id")
         td = conn.execute(query, {"id": todo_id}).fetchone()._mapping  # type: ignore
@@ -57,7 +69,7 @@ def get_todo_id(todo_id: int, conn: Connection) -> Todo:
             description=td.description,
             date_created=td.date_created,
             date_due=td.date_due,
-            priority=td.priority,
+            priority=PriorityType[td.priority],
             completed=td.completed,
         )
     except Exception as e:
@@ -67,6 +79,17 @@ def get_todo_id(todo_id: int, conn: Connection) -> Todo:
 
 
 def get_todos_from_user(user_id: int, conn: Connection) -> List[Todo]:
+    """
+    Returns a list of todo objects related to the given user id from the database.
+    Parameters:
+        - user_id: An integer corresponding to the id value of a user object in the database.
+        - conn: A connection to execute queries from
+    Returns:
+        A list of todo objects with the data corresponding to that of the todo items in the database related to the given user.
+
+    Usage:
+        todo = get_todo_id(todo_id, conn)
+    """
     try:
         query = text("SELECT * FROM todos WHERE user_id = :user_id")
         rows = conn.execute(query, {"user_id": user_id}).fetchall()
@@ -80,7 +103,7 @@ def get_todos_from_user(user_id: int, conn: Connection) -> List[Todo]:
                     description=td.description,
                     date_created=td.date_created,
                     date_due=td.date_due,
-                    priority=td.priority,
+                    priority=PriorityType[td.priority],
                     completed=td.completed,
                 )
             )

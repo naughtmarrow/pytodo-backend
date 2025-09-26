@@ -7,3 +7,14 @@ class User(BaseModel):
     id: Optional[int] # optional since when creating we won't have an id
     username: str
     password: str
+
+    def __eq__(self, o):
+        if isinstance(o, User):
+            raise TypeError
+
+        if self.id != o.id:
+            return False
+        if self.username != o.username:
+            return False
+        if self.password != o.password:
+            return False

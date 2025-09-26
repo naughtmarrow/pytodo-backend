@@ -47,6 +47,9 @@ class TransactionManager:
     Class that is used to manage database transactions during orchestration of database operations.
     It automatically opens, closes, rollbacks and commits sessions for the user.
 
+    Parameters:
+        debug: A boolean value used to determine whether or not the transaction should rollback by default
+
     Usage:
         In BL:
         The transaction manager connection is passed to other methods for querying.
