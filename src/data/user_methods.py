@@ -2,7 +2,7 @@ from src.core import User
 from sqlalchemy import Connection, text
 
 
-def save_user(user: User, conn: Connection) -> User:
+def save_user(user: User, conn: Connection) -> int:
     """
     Saves a user object in the database.
     Parameters:
@@ -109,7 +109,6 @@ def delete_user(user: User, conn: Connection) -> bool:
     Parameters:
         - user: An object of type Todo to be deleted 
         - conn: A connection to execute queries from
-    Returns:
         A boolean value to represent the success of the operation.
 
     Usage:
