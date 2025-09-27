@@ -30,8 +30,12 @@ def handle_generic_exception(e: HTTPException) -> Response:
     response.status_code = 500
     return response
 
+
 def success_response(code, data) -> Response:
     """
     Returns a successful response with the given data.
     """
-    return jsonify({"status": "success", "code": code, "data": data})
+    response: Response = jsonify({"status": "success", "code": code, "data": data})
+
+    response.status_code = code
+    return response

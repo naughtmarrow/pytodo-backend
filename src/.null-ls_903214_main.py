@@ -2,7 +2,7 @@
 import logging
 import os
 
-from flask import Flask, make_response, request
+from flask import Flask, make_response
 from werkzeug.exceptions import HTTPException
 
 from src.data import ping_db
@@ -43,11 +43,11 @@ def create_app():
     from dotenv import load_dotenv
     load_dotenv()
     frontend_url: str = (
-        f"{os.getenv('PROTOCOL')}://{os.getenv('FRONT_HOST')}:{os.getenv('FRONT_PORT')}"
+        f"{os.getenv('PROTOCOPROTOCOLL')}://{os.getenv('FRONT_HOST')}:{os.getenv('FRONT_PORT')}"
     )
 
-    @app.before_request
-    def handle_preflight():
+    @app.before_request # type: ignore
+    def handle_preflight(request):
         if request.method == 'OPTIONS':
             response = make_response()
             response.headers['Access-Control-Allow-Origin'] = frontend_url
@@ -63,7 +63,7 @@ def create_app():
             "default-src 'self'; "
             "script-src 'self'; "
             "style-src 'self'; "
-            "form-action 'self'; "
+            "form-action 'self'"
 
             "frame-ancestors 'none'; " # important for xss prevention
         ) # might need to add more stuff later also this goes in the frontend once i do the division
@@ -79,11 +79,9 @@ def create_app():
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['Permissions-Policy'] = 'interest-cohort=()' # goes in the frontend
 
-        response.headers['Server'] = 'Pytodo' # version is hidden in gunicorn but just in case, probably should use a reverse proxy anyways
-        response.headers['X-Powered-By'] = 'Caffeine'
+        response.headers.pop('Server', None)
+        response.headers.pop('X-Powered-By', None)
         response.headers['X-DNS-Prefetch-Control'] = 'off' # also in the frontend
-
-        return response
 
 
     logger.info(msg="Server Setup Complete...")
