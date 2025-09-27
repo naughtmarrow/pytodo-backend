@@ -9,6 +9,8 @@ from .todo_methods import (
 from .user_methods import (
     delete_user,
     get_user_id,
+    get_user_id_from_name,
+    get_user_password,
     update_user,
     save_user,
 )
@@ -23,6 +25,8 @@ __all__ = [
     "delete_todo",
     "save_user",
     "get_user_id",
+    "get_user_id_from_name",
+    "get_user_password",
     "update_user",
     "delete_user",
 ]

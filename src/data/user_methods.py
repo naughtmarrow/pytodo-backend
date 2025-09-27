@@ -82,22 +82,43 @@ def get_user_id(user_id: int, conn: Connection) -> User:
         raise e
     pass
 
+# for fetching user_id after login, currently more a hack than anything since we don't have proper session management
+# there's probably a much better way of handling this but i'm not caffeinated enough to figure it right now
+def get_user_id_from_name(username: str, conn: Connection):
+    try:
+        query = text("SELECT users.id FROM users WHERE username = :username")
+        res = conn.execute(query, {"username": username}).fetchone()
 
-def get_user_password(user_id: int, conn: Connection) -> str:
+        if res is None:
+            raise NoData
+
+        id = res.id  # type: ignore
+
+        return id 
+
+    except Exception as e:
+        _logger.error(msg=f"Error while fetching user from id: {e}")
+        raise e
+
+# get user password to be used for login purposes only
+def get_user_password(username: str, conn: Connection) -> str:
     """
-    Returns a user's password with the requested id from the database for login.
+    Returns the user's hashed password with the requested username from the database for login purposes.
+    Should only be used in conjunction with the auth methods since the password is stored in hash form anyways.
     Parameters:
-        - user_id: An integer corresponding to the id value of a user object in the database
+        - username: A string corresponding to the username value of a user object in the database
         - conn: A connection to execute queries from
     Returns:
-        A user object with the data corresponding to that of the user item in the database (minus password).
+        A string representing the password of the relevant user item in the database.
 
     Usage:
-        user = get_user_id(user_id, conn)
+        (within check_password method)
+        password_hash = get_user_password(username, conn)
+        check_password_hash(password_hash, raw_password_text)
     """
     try:
-        query = text("SELECT users.password FROM users WHERE id = :id")
-        res = conn.execute(query, {"id": user_id}).fetchone()
+        query = text("SELECT users.id, users.password FROM users WHERE username = :username")
+        res = conn.execute(query, {"username": username}).fetchone()
 
         # HACK: this really can't be the best way to deal with this lmao
         if res is None:
@@ -110,7 +131,6 @@ def get_user_password(user_id: int, conn: Connection) -> str:
     except Exception as e:
         _logger.error(msg=f"Error while fetching user from id: {e}")
         raise e
-    pass
 
 
 def update_user(user: User, conn: Connection) -> int:
