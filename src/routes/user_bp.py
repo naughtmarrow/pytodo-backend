@@ -29,7 +29,7 @@ def _get_user_id_route(user_id):
             response.status_code = 200
             return response
 
-    except (NoData, NoDataFound) as e:
+    except (NoData, NoDataFound):
         abort(404, description=f"User with id {user_id} not found")
     except Exception as e:
         _logger.error(msg=f"Unkwown error in todo GET list from user route: {e}")

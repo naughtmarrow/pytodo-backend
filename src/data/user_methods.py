@@ -25,8 +25,8 @@ def save_user(user: User, conn: Connection) -> int:
             "INSERT INTO users (username, password)"
             + "VALUES (:username, :password) RETURNING id"
         )
-
-        id = (
+        # it's probably fine to take the password here since we are creating the user
+        res = (
             conn.execute(
                 query,
                 {
@@ -35,9 +35,12 @@ def save_user(user: User, conn: Connection) -> int:
                 },
             )
             .one()
-            .id
         )
 
+        if res is None:
+            raise Exception("User create responds with no data")
+
+        id = res.id
         return id
 
     except Exception as e:
@@ -45,14 +48,15 @@ def save_user(user: User, conn: Connection) -> int:
         raise e
 
 
+# minus password cause we don't want the password running around everywhere
 def get_user_id(user_id: int, conn: Connection) -> User:
     """
-    Returns a user object with the requested id from the database.
+    Returns a user object (minus password) with the requested id from the database.
     Parameters:
         - user_id: An integer corresponding to the id value of a user object in the database
         - conn: A connection to execute queries from
     Returns:
-        A user object with the data corresponding to that of the user item in the database.
+        A user object with the data corresponding to that of the user item in the database (minus password).
 
     Usage:
         user = get_user_id(user_id, conn)
@@ -67,11 +71,10 @@ def get_user_id(user_id: int, conn: Connection) -> User:
 
         usr = usr._mapping  # type: ignore
 
-        # WARN: PROBABLY SHOULDN'T BE FETCHING THE PASSWORD UNLESS ABSOLUTELY NECESSARY
         return User(
             id=usr.id,
             username=usr.username,
-            password=usr.password,
+            password=None
         )
 
     except Exception as e:
@@ -80,45 +83,116 @@ def get_user_id(user_id: int, conn: Connection) -> User:
     pass
 
 
-def update_user(user: User, conn: Connection) -> User:
+def get_user_password(user_id: int, conn: Connection) -> str:
     """
-    Updates an already existing user object's values in the database.
+    Returns a user's password with the requested id from the database for login.
+    Parameters:
+        - user_id: An integer corresponding to the id value of a user object in the database
+        - conn: A connection to execute queries from
+    Returns:
+        A user object with the data corresponding to that of the user item in the database (minus password).
+
+    Usage:
+        user = get_user_id(user_id, conn)
+    """
+    try:
+        query = text("SELECT users.password FROM users WHERE id = :id")
+        res = conn.execute(query, {"id": user_id}).fetchone()
+
+        # HACK: this really can't be the best way to deal with this lmao
+        if res is None:
+            raise NoData
+
+        password = res.password  # type: ignore
+
+        return password
+
+    except Exception as e:
+        _logger.error(msg=f"Error while fetching user from id: {e}")
+        raise e
+    pass
+
+
+def update_user(user: User, conn: Connection) -> int:
+    """
+    Updates an already existing user object's values (minus password) in the database.
     Parameters:
         - user: An object of type Todo to be updated
         - conn: A connection to execute queries from
     Returns:
-        A user object with the data corresponding to that of the user item in the database.
+        An id corresponding to the the user item in the database.
 
     Usage:
         user = update_user(user, conn)
     """
     try:
         query = text(
-            "UPDATE users SET username = :username, password = :password "
-            + "WHERE id = :id RETURNING *"
+            "UPDATE users SET username = :username "
+            + "WHERE id = :id RETURNING id"
         )
 
-        # WARN: PROBABLY SHOULDN'T BE UPDATING THE PASSWORD UNLESS ABSOLUTELY NECESSARY
         res = (
             conn.execute(
                 query,
                 {
                     "id": user.id,
                     "username": user.username,
+                },
+            )
+            .one()
+        )
+
+        if res is None:
+            raise Exception("User create responds with no data")
+
+        id = res.id
+        return id
+    except Exception as e:
+        _logger.error(msg=f"Error while updating user: {e}")
+        raise e
+
+# seperated the update for the password because we don't wanna have the password on the backend more than needed
+def update_user_password(user: User, conn: Connection) -> int:
+    """
+    Updates an already existing user object's password in the database.
+    Parameters:
+        - user: An object of type Todo to be updated
+        - conn: A connection to execute queries from
+    Returns:
+        An id corresponding to the the user item in the database.
+
+    Usage:
+        user = update_user_password(user, conn)
+    """
+    try:
+        query = text(
+            "UPDATE users SET password = :password "
+            + "WHERE id = :id RETURNING id"
+        )
+
+        res = (
+            conn.execute(
+                query,
+                {
+                    "id": user.id,
                     "password": user.password,
                 },
             )
             .one()
-            ._mapping
         )
 
-        return User(**res)
+        if res is None:
+            raise Exception("User create responds with no data")
+
+        id = res.id
+        return id
     except Exception as e:
         _logger.error(msg=f"Error while updating user: {e}")
         raise e
 
 
-def delete_user(user: User, conn: Connection) -> bool:
+
+def delete_user(user: User, conn: Connection):
     """
     Deletes a user item from the database.
     Parameters:
@@ -133,7 +207,6 @@ def delete_user(user: User, conn: Connection) -> bool:
         query = text("DELETE FROM users WHERE id = :id")
         conn.execute(query, {"id": user.id})
 
-        return True
     except Exception as e:
         _logger.error(msg=f"Error while deleting user: {e}")
         raise e

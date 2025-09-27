@@ -28,7 +28,7 @@ def save_todo(td: Todo, conn: Connection) -> int:
             + "VALUES (:user_id, :description, :date_created, :date_due, :priority, :completed) RETURNING id"
         )
 
-        id = (
+        res = (
             conn.execute(
                 query,
                 {
@@ -41,9 +41,11 @@ def save_todo(td: Todo, conn: Connection) -> int:
                 },
             )
             .one()
-            .id
         )
+        if res is None:
+            raise Exception("Todo insert returned no id")
 
+        id = res.id
         return id
     except Exception as e:
         _logger.error(msg=f"Error while saving TODO: {e}")
@@ -143,7 +145,7 @@ def update_todo(td: Todo, conn: Connection) -> int:
             + "WHERE id = :id RETURNING id"
         )
 
-        id = (
+        res = (
             conn.execute(
                 query,
                 {
@@ -157,9 +159,12 @@ def update_todo(td: Todo, conn: Connection) -> int:
                 },
             )
             .one()
-            .id
         )
+        if res is None:
+            raise Exception("Todo update returned no ID")
 
+
+        id = res.id
         return id
 
     except Exception as e:
@@ -167,7 +172,7 @@ def update_todo(td: Todo, conn: Connection) -> int:
         raise e
 
 
-def delete_todo(td: Todo, conn: Connection) -> bool:
+def delete_todo(td: Todo, conn: Connection):
     """
     Deletes a todo item from the database.
     Parameters:
@@ -183,7 +188,6 @@ def delete_todo(td: Todo, conn: Connection) -> bool:
         query = text("DELETE FROM todos WHERE id = :id")
         conn.execute(query, {"id": td.id})
 
-        return True
     except Exception as e:
         _logger.error(msg=f"Error while deleting TODO: {e}")
         raise e

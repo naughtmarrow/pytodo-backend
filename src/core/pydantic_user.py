@@ -6,7 +6,8 @@ from typing import Optional
 class User(BaseModel):
     id: Optional[int] # optional since when creating we won't have an id
     username: str
-    password: str
+    password: Optional[str] # optional since we don't want to take this all over the place
+    # password will probably only ever be loaded into this object during signup to simplify the insertion mechanism
 
     def __eq__(self, o):
         if isinstance(o, User):
