@@ -21,7 +21,6 @@ def _db_init():
         url,
         connect_args={"options": f"-csearch_path={os.getenv('DB_SCHEMA')}"},
         pool_pre_ping=True,
-        echo=True,
     )
 
 
