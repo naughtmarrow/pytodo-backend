@@ -2,7 +2,8 @@
 import logging
 import os
 
-from flask import Flask, make_response, request
+from flask import Flask, make_response, request, abort
+from flask_wtf import CSRFProtect #type: ignore
 from werkzeug.exceptions import HTTPException
 
 from src.data import ping_db
@@ -13,6 +14,7 @@ from src.routes import (
     user_blueprint,
 )
 
+csrf = CSRFProtect()
 
 def create_app():
     logging.basicConfig(
@@ -28,7 +30,12 @@ def create_app():
     if not ping_db():
         raise Exception("Database must be started for app to run")
 
+    from dotenv import load_dotenv
+    load_dotenv()
+
     app = Flask(__name__)
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    csrf.init_app(app) # adds csrf tokens to all requests/responses
 
     app.register_blueprint(user_blueprint)
     app.register_blueprint(todo_blueprint)
@@ -40,8 +47,7 @@ def create_app():
     def hello_world():
         return "<p>Hello, World!</p>"
 
-    from dotenv import load_dotenv
-    load_dotenv()
+
     frontend_url: str = (
         f"{os.getenv('PROTOCOL')}://{os.getenv('FRONT_HOST')}:{os.getenv('FRONT_PORT')}"
     )
@@ -56,6 +62,15 @@ def create_app():
             response.headers['Access-Control-Allow-Credentials'] = 'true'
             response.headers['Access-Control-Max-Age'] = '86400'
             return response
+
+    @app.before_request
+    def enforce_json(): # for a bit extra csrf protection since this is a pure json api anyways
+        if request.method in ['GET', 'OPTIONS']: # these are just get/preflights so we skip
+            return
+
+        content_type = request.headers.get('Content-Type', '')
+        if not content_type.startswith('application/json'): # check the content type is json first, not in additional types
+            abort(400, description="Content must be json")
 
     @app.after_request
     def security_headers(response):
