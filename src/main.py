@@ -72,6 +72,12 @@ def create_app():
         if not content_type.startswith('application/json'): # check the content type is json first, not in additional types
             abort(400, description="Content must be json")
 
+        try:
+            if request.get_data():
+                request.get_json(force=True) # check that it is valid json
+        except Exception as e:
+            logger.info(f"json enforcement method caught {e}")
+
     @app.after_request
     def security_headers(response):
         csp = (
