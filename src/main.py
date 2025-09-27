@@ -58,7 +58,7 @@ def create_app():
             response = make_response()
             response.headers['Access-Control-Allow-Origin'] = frontend_url
             response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE'
-            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-CSRF-Token'
             response.headers['Access-Control-Allow-Credentials'] = 'true'
             response.headers['Access-Control-Max-Age'] = '86400'
             return response
@@ -88,7 +88,7 @@ def create_app():
 
         response.headers['Access-Control-Allow-Origin'] = frontend_url
         response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-CSRF-Token'
         response.headers['Access-Control-Allow-Credentials'] = 'true'
 
         response.headers['X-Content-Type-Options'] = 'nosniff'
