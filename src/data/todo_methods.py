@@ -28,25 +28,21 @@ def save_todo(td: Todo, conn: Connection) -> int:
             + "VALUES (:user_id, :description, :date_created, :date_due, :priority, :completed) RETURNING id"
         )
 
-        res = (
-            conn.execute(
-                query,
-                {
-                    "user_id": td.user_id,
-                    "description": td.description,
-                    "date_created": td.date_created,
-                    "date_due": td.date_due,
-                    "priority": td.priority,
-                    "completed": td.completed,
-                },
-            )
-            .one()
-        )
+        res = conn.execute(
+            query,
+            {
+                "user_id": td.user_id,
+                "description": td.description,
+                "date_created": td.date_created,
+                "date_due": td.date_due,
+                "priority": td.priority,
+                "completed": td.completed,
+            },
+        ).first()
         if res is None:
             raise Exception("Todo insert returned no id")
 
-        id = res.id
-        return id
+        return res.id
     except Exception as e:
         _logger.error(msg=f"Error while saving TODO: {e}")
         raise e
@@ -66,12 +62,10 @@ def get_todo_id(todo_id: int, conn: Connection) -> Todo:
     """
     try:
         query = text("SELECT * FROM todos WHERE id = :id")
-        td = conn.execute(query, {"id": todo_id}).fetchone()
+        td = conn.execute(query, {"id": todo_id}).first()
 
         if td is None:
             raise NoData
-
-        td = td._mapping  # type: ignore
 
         return Todo(
             id=td.id,
@@ -145,27 +139,22 @@ def update_todo(td: Todo, conn: Connection) -> int:
             + "WHERE id = :id RETURNING id"
         )
 
-        res = (
-            conn.execute(
-                query,
-                {
-                    "id": td.id,
-                    "user_id": td.user_id,
-                    "description": td.description,
-                    "date_created": td.date_created,
-                    "date_due": td.date_due,
-                    "priority": td.priority,
-                    "completed": td.completed,
-                },
-            )
-            .one()
-        )
+        res = conn.execute(
+            query,
+            {
+                "id": td.id,
+                "user_id": td.user_id,
+                "description": td.description,
+                "date_created": td.date_created,
+                "date_due": td.date_due,
+                "priority": td.priority,
+                "completed": td.completed,
+            },
+        ).first()
         if res is None:
             raise Exception("Todo update returned no ID")
 
-
-        id = res.id
-        return id
+        return res.id
 
     except Exception as e:
         _logger.error(msg=f"Error while updating TODO: {e}")

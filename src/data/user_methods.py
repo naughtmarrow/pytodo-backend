@@ -34,14 +34,13 @@ def save_user(user: User, conn: Connection) -> int:
                     "password": user.password,
                 },
             )
-            .one()
+            .first()
         )
 
         if res is None:
             raise Exception("User create responds with no data")
 
-        id = res.id
-        return id
+        return res.id
 
     except Exception as e:
         _logger.error(msg=f"Error while saving user: {e}")
@@ -63,13 +62,10 @@ def get_user_id(user_id: int, conn: Connection) -> User:
     """
     try:
         query = text("SELECT * FROM users WHERE id = :id")
-        usr = conn.execute(query, {"id": user_id}).fetchone()
+        usr = conn.execute(query, {"id": user_id}).first()
 
-        # HACK: this really can't be the best way to deal with this lmao
         if usr is None:
             raise NoData
-
-        usr = usr._mapping  # type: ignore
 
         return User(
             id=usr.id,
@@ -84,24 +80,27 @@ def get_user_id(user_id: int, conn: Connection) -> User:
 
 # for fetching user_id after login, currently more a hack than anything since we don't have proper session management
 # there's probably a much better way of handling this but i'm not caffeinated enough to figure it right now
-def get_user_id_from_name(username: str, conn: Connection):
+def get_user_from_name(username: str, conn: Connection) -> User:
     try:
-        query = text("SELECT users.id FROM users WHERE username = :username")
-        res = conn.execute(query, {"username": username}).fetchone()
+        query = text("SELECT * FROM users WHERE username = :username")
+        res = conn.execute(query, {"username": username}).first()
 
+        # HACK: this really can't be the best way to deal with this lmao
         if res is None:
             raise NoData
 
-        id = res.id  # type: ignore
-
-        return id 
+        return User(
+            id=res.id,
+            username=res.username,
+            password=None
+        )
 
     except Exception as e:
         _logger.error(msg=f"Error while fetching user from id: {e}")
         raise e
 
 # get user password to be used for login purposes only
-def get_user_password(username: str, conn: Connection) -> str:
+def get_user_password(username: str, conn: Connection) -> (int, str):
     """
     Returns the user's hashed password with the requested username from the database for login purposes.
     Should only be used in conjunction with the auth methods since the password is stored in hash form anyways.
@@ -118,15 +117,12 @@ def get_user_password(username: str, conn: Connection) -> str:
     """
     try:
         query = text("SELECT users.id, users.password FROM users WHERE username = :username")
-        res = conn.execute(query, {"username": username}).fetchone()
+        res = conn.execute(query, {"username": username}).first()
 
-        # HACK: this really can't be the best way to deal with this lmao
         if res is None:
             raise NoData
 
-        password = res.password  # type: ignore
-
-        return password
+        return (res.id, res.password)
 
     except Exception as e:
         _logger.error(msg=f"Error while fetching user from id: {e}")
@@ -159,7 +155,7 @@ def update_user(user: User, conn: Connection) -> int:
                     "username": user.username,
                 },
             )
-            .one()
+            .first()
         )
 
         if res is None:
@@ -198,7 +194,7 @@ def update_user_password(user: User, conn: Connection) -> int:
                     "password": user.password,
                 },
             )
-            .one()
+            .first()
         )
 
         if res is None:

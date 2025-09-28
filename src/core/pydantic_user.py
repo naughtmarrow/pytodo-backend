@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class User(BaseModel):
@@ -18,3 +19,15 @@ class User(BaseModel):
             return False
         if self.password != o.password:
             return False
+
+    def get_id(self):
+        return str(self.id)
+
+    def is_authenticated(self):
+        return True # for now we don't have anonymous users i guess
+
+    def is_active(self):
+        return True # for now we won't have user deactivation systems
+
+    def is_anonymous(self) -> bool:
+        return False # for now we don't have anonymous users

@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Dict, List
 
 from flask import Blueprint, Response, abort, request
+from flask_login import login_required, current_user  # type: ignore
 from psycopg2.errors import NoData, NoDataFound
 from pydantic import ValidationError
 
@@ -22,11 +23,12 @@ _logger = logging.getLogger("TODOROUTE")
 todo_blueprint: Blueprint = Blueprint("todo_bp", __name__, url_prefix="/todos")
 
 
-@todo_blueprint.route("/<user_id>", methods=["GET"])
-def _get_todos_from_user_route(user_id):
+@todo_blueprint.route("/", methods=["GET"])
+@login_required
+def _get_todos_from_user_route():
     try:
         with TransactionManager() as conn:
-            tdlist: List[Todo] = get_todos_from_user(user_id, conn)
+            tdlist: List[Todo] = get_todos_from_user(current_user.id, conn)
             tdlist_dict: List[Dict] = []
             for x in tdlist:
                 tdlist_dict.append(x.model_dump())
@@ -43,6 +45,7 @@ def _get_todos_from_user_route(user_id):
 
 
 @todo_blueprint.route("/", methods=["POST"])
+@login_required
 def _post_todo_route():
     try:
         if not request.is_json:
@@ -51,7 +54,7 @@ def _post_todo_route():
         content = request.get_json()
         todo: Todo = Todo(
             id=None,
-            user_id=content["user_id"],
+            user_id=current_user.id,
             description=content["description"],
             date_created=datetime.now(),  # HACK: PROBABLY SHOULD DO THIS IN SOME SORT OF CONSTRUCTOR
             date_due=content["date_due"],
@@ -81,6 +84,7 @@ def _post_todo_route():
 
 
 @todo_blueprint.route("/", methods=["PUT"])
+@login_required
 def _put_todo_route():
     try:
         if not request.is_json:
@@ -89,7 +93,7 @@ def _put_todo_route():
         content = request.get_json()
         todo: Todo = Todo(
             id=content["id"],
-            user_id=content["user_id"],
+            user_id=current_user.id,
             description=content["description"],
             date_created=content["date_created"],
             date_due=content["date_due"],
@@ -98,8 +102,6 @@ def _put_todo_route():
         )
 
         with TransactionManager() as conn:
-            # probably don't need to get the user but i don't think it hurts too much for now
-            # WARN: other than the password stuff but i should fix that elsewhere anyways
             todo_id: Todo = update_todo(todo, conn)
 
             response: Response = success_response(
@@ -121,6 +123,7 @@ def _put_todo_route():
 
 
 @todo_blueprint.route("/<todo_id>", methods=["DELETE"])
+@login_required
 def _delete_todo_route(todo_id):
     try:
         with TransactionManager() as conn:
