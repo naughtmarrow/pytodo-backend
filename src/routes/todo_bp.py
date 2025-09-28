@@ -95,7 +95,7 @@ def _put_todo_route():
             id=content["id"],
             user_id=current_user.id,
             description=content["description"],
-            date_created=content["date_created"],
+            date_created=content["date_created"], # just easier this way honestly
             date_due=content["date_due"],
             priority=content["priority"],
             completed=content["completed"],
